@@ -11,30 +11,27 @@ from telegram.ext import (
 # CONFIG
 # =========================
 BOT_TOKEN = "8247238867:AAFegzRzyLUkK5CHVK535L4ZshwHxXsCHVo"
-ADMIN_ID = 6541825979      # Your Telegram ID
+ADMIN_ID = 6541825979
 USDT_ADDRESS = "TUmPVgYgFSw2cSigkCS276Rxxomm9mvdAh"
-MIN_DEPOSIT = 50.0        # Minimum Deposit Required to Activate
-RATE = 0.40               # $0.40 per 1 Credit
+MIN_DEPOSIT = 50.0
+RATE = 0.40
 
 # =========================
-# IN-MEMORY USER DATABASE
+# USER DATABASE (IN MEMORY)
 # =========================
-users = {}  # user_id : {"username": str, "balance": float, "active": bool}
+users = {}  # user_id -> {"username": str, "balance": float, "active": bool}
 
-# =========================
-# LOGGING
-# =========================
 logging.basicConfig(level=logging.INFO)
 
 
 # =========================
-# START
+# START COMMAND
 # =========================
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     uid = user.id
 
-    # Create user record if not exists
+    # Create database entry if not exists
     if uid not in users:
         users[uid] = {
             "username": user.username,
@@ -45,17 +42,17 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     msg = f"""
 👋 Hello **{user.first_name}!**
 
-Welcome to our official digital credit service.
+Welcome to our official virtual credit service.
 
-💠 We offer **Virtual Credits**  
-💠 Price rate: **$0.40 per 1 Credit**  
-💠 Minimum deposit required to activate your account: **${MIN_DEPOSIT}**
+💠 We offer **Digital Virtual Credits**  
+💠 Rate: **$0.40 = 1 Credit**  
+💠 Minimum deposit to activate: **${MIN_DEPOSIT}**
 
-Once your account is activated, you will be able to:
-- Purchase credits  
-- Use premium services  
-- Access your balance  
-- Unlock full bot features  
+After activation you can:
+- Buy credits  
+- Use premium tools  
+- Check balance  
+- Unlock full bot access  
 
 Choose an option below:
 """
@@ -74,7 +71,7 @@ Choose an option below:
 
 
 # =========================
-# CALLBACK BUTTONS
+# BUTTON HANDLER
 # =========================
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
@@ -86,16 +83,16 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"""
 💳 **Deposit Instructions**
 
-To activate your account, please make a minimum deposit of **${MIN_DEPOSIT}**.
+To activate your account, send at least **${MIN_DEPOSIT}**.
 
-Send USDT (TRC20) to the address below:
+Send **USDT (TRC20)** to:
 
 `{USDT_ADDRESS}`
 
-Once completed, send a payment screenshot to the admin for approval.
+After payment, send the screenshot to Admin.
 
-👨‍💼 Admin Contact:  
-@{context.bot.username}_admin
+👨‍💼 **Admin Contact:**  
+@mdabi_admin
             """,
             parse_mode="Markdown"
         )
@@ -125,21 +122,20 @@ Rate: **$0.40 = 1 Credit**
 ➡️ **$1 = 2.5 Credits**  
 ➡️ **1 Credit = $0.40**
 
-Example:
-- $10 gives 25 credits  
-- $50 gives 125 credits  
+Examples:
+- $10 → 25 Credits  
+- $50 → 125 Credits
 
-Credits are used to access and unlock various digital services.
+Credits allow access to premium tools and digital services.
             """,
             parse_mode="Markdown"
         )
 
 
 # =========================
-# ADMIN COMMANDS
+# ADMIN: ADD BALANCE
 # =========================
 async def add_balance(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Admin adds balance to a user."""
     if update.effective_user.id != ADMIN_ID:
         return
 
@@ -151,22 +147,21 @@ async def add_balance(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_id = int(context.args[0])
         amount = float(context.args[1])
     except ValueError:
-        await update.message.reply_text("Invalid input format.")
+        await update.message.reply_text("Invalid format.")
         return
 
     if user_id not in users:
-        await update.message.reply_text("User not found in database.")
+        await update.message.reply_text("User not found.")
         return
 
-    # Update balance
     users[user_id]["balance"] += amount
 
-    # Auto-activate when deposit reaches the required minimum
+    # Activate account automatically if balance reaches minimum
     if users[user_id]["balance"] >= MIN_DEPOSIT:
         users[user_id]["active"] = True
 
     await update.message.reply_text(
-        f"Successfully added ${amount:.2f} to user {user_id}.\n"
+        f"Added **${amount:.2f}** to user {user_id}.\n"
         f"New Balance: **${users[user_id]['balance']:.2f}**",
         parse_mode="Markdown"
     )
@@ -182,7 +177,7 @@ def main():
     app.add_handler(CommandHandler("addbalance", add_balance))
     app.add_handler(CallbackQueryHandler(button_handler))
 
-    print("Bot is now running...")
+    print("Bot is Running...")
     app.run_polling()
 
 
